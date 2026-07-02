@@ -3,8 +3,11 @@ import threading
 from .Types import Message
 from .handlers import process_message
 from time import sleep
+import json
 
 class Bot:
+    """
+    this class get token , parse mode (optional) and base_url (optional)"""
     #init
     def __init__(self, token, parse_mode=None, base_url=None):
         self.token = token
@@ -19,21 +22,42 @@ class Bot:
         else:
             self.offset = 0
 
-    # requests manager (not for use in your code)
     def request(self, method, data=None, files=None):
+        """
+        this method for managed requests (none for use in your code)
+        """
         try:
-            r = self.session.post(self.base + method, data=data, files=files, timeout=30)
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
-            print(e)
-            return {"ok": False, "error": str(e)}
+            r = self.session.post(
+                self.base + method,
+                data=data,
+                files=files,
+                timeout=30
+            )
 
-    # message handler
-    # use 
-    # @bot.message_handler(["start"]) or @bot.message_handler(func= lambda m: True)
+            try:
+                return r.json()
+            except Exception:
+                return {
+                    "ok": False,
+                    "error_code": r.status_code,
+                    "description": r.text
+                }
+
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": str(e)
+            }
+
+
     def message_handler(self, commands=None, func=None, content_types = None):
+        """
+        message handler \n
+        use: \n
+        @bot.message_handler(["start"]) or @bot.message_handler(func= lambda m: True)
+        """
         def decorator(handler):
+            
             self.handlers.append({
                 "commands": commands or [],
                 "filter_func": func,
@@ -45,6 +69,9 @@ class Bot:
 
     # send message
     def send_message(self, chat_id, text, parse_mode=None):
+        """
+        send a message to chat id
+        """
         data = {
             "chat_id": chat_id,
             "text": text,
@@ -59,15 +86,62 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+    #delete message
     def delete_message(self, chat_id, message_id):
+        """
+        delete message
+        """
         data = {"chat_id": chat_id,
                 "message_id": message_id}
         
         self.request("deleteMessage",
                      data=data)
+        
+    # edit messages
+    def edit_message(self, chat_id, message_id, text):
+        '''
+        edit message with message id
+        '''
+        data = {"chat_id": chat_id,
+                "message_id": message_id,
+                "text": text}
+        
+        self.request("editMessageText", data=data)
+
+    # edit caption
+    def edit_caption(self, chat_id, message_id, caption):
+        """
+        edit caption \n
+        for video or photo messsages
+        """
+        data = {"chat_id": chat_id,
+                "message_id": message_id,
+                "caption": caption}
+        
+        self.request("editMessageCaption", data=data)
+
     
-    # send a Photo
+    def send_message_reaction(self, chat_id, message_id, emoji, is_big=False):
+        """ send message reaction \n
+         avaible reaction on https://core.telegram.org/bots/api#reactiontypeemoji """
+        data = {
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "reaction": json.dumps([
+                {
+                    "type": "emoji",
+                    "emoji": emoji
+                }
+            ], ensure_ascii=False),
+            "is_big": is_big
+        }
+        return self.request("setMessageReaction", data=data)
+    
+    
     def send_photo(self, chat_id, photo, caption=None, reply_to_message_id=None, parse_mode=None):
+        """
+        send photo with URL or photo file
+        """
         data = {
             "chat_id": chat_id,
             "caption": caption,
@@ -87,11 +161,14 @@ class Bot:
         return None
 
     
-    # reply message
-    def reply_to(self, message, text, parse_mode=None):
+    def reply_to(self, message, text, message_id=None, parse_mode=None):
+        """
+        reply to message \n
+        reply to selected message with message_id
+        """
         data = {"chat_id": message.chat.id,
                 "text": text,
-                'reply_to_message_id': message.message_id,
+                'reply_to_message_id': message_id or message.message_id,
                 "parse_mode": parse_mode if parse_mode else self.parse_mode
                 }
         
@@ -100,11 +177,27 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+    #send chat action
     def send_chat_action(self, chat_id, action):
+        """
+        send chat action \n
+        type of actions =  \n
+        typing for text messages, \n 
+        upload_photo for photos, \n 
+        record_video or upload_video for videos, \n
+        record_voice or upload_voice for voice notes, \n
+        upload_document for general files, \n
+        choose_sticker for stickers, \n
+        find_location for location data, \n
+        record_video_note or upload_video_note for video notes.
+        """
         return self.request("sendChatAction", data={"chat_id": chat_id, "action": action})
 
     # pin a message
     def pin_message(self, chat_id, message_id):
+        """
+        pin message with message id
+        """
         data = {"chat_id": chat_id,
                 "message_id": message_id}
         
@@ -113,6 +206,10 @@ class Bot:
     
     #unpin messages
     def unpin_message(self, chat_id, message_id=None):
+        """
+        unpin messages \n
+        if message id is None , unpinned all messages
+        """
         if message_id != None:
             #unpin selected message
             return self.request("unpinChatMessage", data={"chat_id":chat_id, "message_id":message_id})
@@ -120,8 +217,11 @@ class Bot:
             #unpin all messages
             return self.request("unpinAllChatMessages", data={"chat_id": chat_id})
 
-    # get updates (not for use in your code)
+    
     def get_updates(self, offset=None, timeout=30):
+        """
+        get updates (not for use in your code)
+        """
         data = {"timeout": timeout}
 
         if offset is not None:
@@ -136,6 +236,10 @@ class Bot:
 
     # download file
     def download_file(self, file_id, file_name = "image.png"):
+        """
+        download file with file id
+        if file name is empty , file named image.png
+        """
         
         file = self.request("getFile", data={"file_id":file_id})
         if not file.get("ok"):
@@ -156,6 +260,9 @@ class Bot:
            
     #polling
     def _polling(self, timeout):
+        """
+        polling (none for use in your code)
+        """
         while True:
             try:
                 updates = self.get_updates(
@@ -180,6 +287,9 @@ class Bot:
                 sleep(2)
 
     def polling(self, timeout=30):
+        """
+        polling your bot
+        """
         threading.Thread(
             target=self._polling,
             args=(timeout,),
