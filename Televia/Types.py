@@ -1,3 +1,5 @@
+import json
+
 class Message:
     def __init__(self, data, bot=None):
         self.raw = data
@@ -39,4 +41,122 @@ class photo:
         self.file_id = data.get("file_id")
 
 
+#inline keyboard button
+class InlineKeyboardButton:
+    """
+    Inline keyboard button \n
+    callbackdata : optional \n
+    url: optional \n
+    style: optional \n
+    types of style: danger(red), success(green), primary(blue)
+    """
+    def __init__(self, text, callback_data=None, url=None, style=None, CopyTextButton=None):
+        self.text = text
+        self.callback_data = callback_data
+        self.url = url
+        self.style = style
+        self.CopyTextButton = CopyTextButton
 
+    def to_dict(self):
+        data = {"text": self.text}
+
+        if self.callback_data is not None:
+            data["callback_data"]= self.callback_data
+        
+        if self.url is not None:
+            data["url"] = self.url
+
+        if self.style is not None:
+            data["style"] = self.style
+
+        if self.CopyTextButton is not None:
+            if hasattr(self.CopyTextButton, "to_dict"):
+                data["copy_text"] = self.CopyTextButton.to_dict()
+
+        return data
+    
+#inline keyboard markup
+class InlineKeyboardMarkup:
+    def __init__(self):
+        self.inline_keyboard = []
+
+    def add(self, *Buttons):
+        row = []
+        for button in Buttons:
+            if isinstance(button, InlineKeyboardButton):
+                row.append(button.to_dict())
+            else:
+                raise TypeError("only InlineKeyboardButton is allowed")
+            
+        self.inline_keyboard.append(row)
+
+    def to_dict(self):
+        return {"inline_keyboard": self.inline_keyboard}
+    
+    def to_json(self):
+        return json.dumps(self.to_dict())
+    
+
+class CopyTextButton:
+    def __init__(self, text):
+        self.text = text
+
+    def to_dict(self):
+        return {"text": self.text}
+
+
+class CallbackQuery:
+    def __init__(self, data):
+        self.id = data.get("id")
+        self.data = data.get("data")
+        self.chat_instance = data.get("chat_instance")
+        self.inline_message_id = data.get("inline_message_id")
+        self.from_user = data.get("from")
+
+        self.message = Message(data["message"]) if data.get("message") else None
+
+class permissions:
+    def __init__(self, can_send_messages=None,
+                 can_send_audios=None,
+                 can_send_documents=None,
+                 can_send_photos=None,
+                 can_send_videos=None,
+                 can_send_video_notes=None,
+                 can_send_voice_notes=None,
+                 can_send_polls=None,
+                 can_send_other_messages=None,
+                 can_add_web_page_previews=None,
+                 can_react_to_messages=None,
+                 can_edit_tag=None,
+                 can_change_info=None,
+                 can_invite_users=None,
+                 can_pin_messages=None,
+                 can_manage_topics=None):
+        
+        self.can_send_messages=can_send_messages
+        self.can_send_audios=can_send_audios
+        self.can_send_documents=can_send_documents
+        self.can_send_photos=can_send_photos
+        self.can_send_videos=can_send_videos
+        self.can_send_video_notes=can_send_video_notes
+        self.can_send_voice_notes=can_send_voice_notes
+        self.can_send_polls=can_send_polls
+        self.can_send_other_messages=can_send_other_messages
+        self.can_add_web_page_previews=can_add_web_page_previews
+        self.can_react_to_messages=can_react_to_messages
+        self.can_edit_tag=can_edit_tag
+        self.can_change_info=can_change_info
+        self.can_invite_users=can_invite_users
+        self.can_pin_messages=can_pin_messages
+        self.can_manage_topics=can_manage_topics
+
+    def to_dict(self):
+        data = {}
+
+        for key, value in self.__dict__.items():
+            if value is not None:
+                data[key] = value
+        return data
+
+    
+        
