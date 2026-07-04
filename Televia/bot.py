@@ -139,6 +139,17 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+    def send_check_list(self, chat_id, checklist):
+        data = {
+            "chat_id": chat_id,
+            "checklist": json.dumps(checklist.to_dict())
+        }
+
+        res = self.request("sendChecklist", data=data)
+        if res["ok"] == True:
+            return Message(res["result"])
+        else:
+            return res
 
     def answer_guest_query(self, guest_query_id, result):
 

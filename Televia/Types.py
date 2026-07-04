@@ -191,3 +191,36 @@ class InputTextMessageContent:
 class SentGuestMessage:
     def __init__(self, data):
         self.inline_message_id = data["inline_message_id"] if data.get("inline_message_id") else None
+
+class InputChecklist:
+    def __init__(self, title):
+        self.title = title
+        self.tasks = []
+
+    def add(self, *tasks):
+        for task in tasks:
+            if isinstance(task, InputChecklistTask):
+                self.tasks.append(task.to_dict())
+            else:
+                raise TypeError("only InputChecklistTask is allowed")
+
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "tasks": self.tasks
+        }
+
+
+class InputChecklistTask:
+    def __init__(self, id, text):
+        self.id = id
+        self.text = text
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "text": self.text
+        }
+    
+
+    
