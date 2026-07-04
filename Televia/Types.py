@@ -17,6 +17,8 @@ class Message:
         self.forward_from = User(data["forward_from"]) if data.get("forward_from") else None
         self.reply_to_message = Message(data["reply_to_message"], bot=bot) if data.get("reply_to_message") else None
 
+        self.guest_query_id = data["guest_query_id"] if data.get("guest_query_id") else None
+
 #chat data    
 class Chat:
     def __init__(self, data):
@@ -70,8 +72,7 @@ class InlineKeyboardButton:
             data["style"] = self.style
 
         if self.CopyTextButton is not None:
-            if hasattr(self.CopyTextButton, "to_dict"):
-                data["copy_text"] = self.CopyTextButton.to_dict()
+            data["copy_text"] = {"text": self.CopyTextButton}
 
         return data
     
@@ -95,14 +96,6 @@ class InlineKeyboardMarkup:
     
     def to_json(self):
         return json.dumps(self.to_dict())
-    
-
-class CopyTextButton:
-    def __init__(self, text):
-        self.text = text
-
-    def to_dict(self):
-        return {"text": self.text}
 
 
 class CallbackQuery:
@@ -158,5 +151,43 @@ class permissions:
                 data[key] = value
         return data
 
+class InlineQueryResultArticle:
+    def __init__(self, id, title, input_message_content,description=None, reply_markup=None):
+        self.type = "article"
+        self.id = id
+        self.title = title
+        self.input_message_content = input_message_content
+        self.reply_markup = reply_markup
+        self.description = description or ""
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "input_message_content": self.input_message_content.to_dict(),
+            "description": self.description,
+            "type": self.type
+        }
+
+        if self.reply_markup is not None:
+            if hasattr(self.reply_markup, "to_dict"):
+                data["reply_markup"] = self.reply_markup.to_dict()
+
+        return data
     
+
+    
+class InputTextMessageContent:
+    def __init__(self, message_text, parse_mode=None):
+        self.message_text = message_text
+        self.parse_mode = parse_mode or ""
+
+    def to_dict(self):
+        return {
+            "message_text": self.message_text,
+            "parse_mode": self.parse_mode
+        }
         
+class SentGuestMessage:
+    def __init__(self, data):
+        self.inline_message_id = data["inline_message_id"] if data.get("inline_message_id") else None

@@ -49,3 +49,20 @@ def process_callback_query(self, data):
                 return
         except Exception as e:
             print(e)
+
+
+def process_guest_message(self, data):
+    text = data.get("text")
+    msg = Message(data)
+
+    for handler in self.handlers:
+        if handler.get("type") != "guest_message":
+            continue
+
+        if handler["filter_func"]:
+            if handler["filter_func"](msg):
+                try:
+                    handler["func"](msg)
+                except Exception as e:
+                    print(e)
+                return

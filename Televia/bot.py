@@ -1,7 +1,7 @@
 import requests
 import threading
-from .Types import Message
-from .handlers import process_message, process_callback_query
+from .Types import Message, SentGuestMessage
+from .handlers import process_message, process_callback_query, process_guest_message
 from time import sleep
 import json
 
@@ -22,7 +22,7 @@ class Bot:
         else:
             self.offset = 0
 
-    def request(self, method, data=None, files=None):
+    def request(self, method, data=None, json_data=None, files=None):
         """
         this method for managed requests (none for use in your code)
         """
@@ -31,6 +31,7 @@ class Bot:
                 self.base + method,
                 data=data,
                 files=files,
+                json=json_data,
                 timeout=30
             )
 
@@ -93,6 +94,25 @@ class Bot:
 
         return self.request("answerCallbackQuery", data=data)
 
+    def guest_message_handler(self, func=None, content_types=None):
+        """
+        message handler
+        use:
+        @bot.message_handler(commands=["start"])
+        @bot.message_handler(func=lambda m: True)
+        """
+        def decorator(handler):
+            self.handlers.append({
+                "type": "guest_message",
+                "commands": [],
+                "filter_func": func,
+                "content_types": content_types or [],
+                "func": handler
+            })
+            return handler
+        return decorator
+
+
     # send message
     def send_message(self, chat_id, text, parse_mode=None,reply_markup=None, protect_content=False, message_effect_id=None):
         """
@@ -119,6 +139,27 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+
+    def answer_guest_query(self, guest_query_id, result):
+
+        data = {
+            "guest_query_id": guest_query_id,
+        }
+        
+        if hasattr(result, "to_dict"):
+            data["result"] = result.to_dict()
+        elif isinstance(result, dict):
+            data["result"] = result
+        else:
+            raise TypeError(f"Invalid result type: {type(result)}")
+
+        res = self.request("answerGuestQuery", json_data=data)
+
+        if res["ok"] == True:
+            return SentGuestMessage(res["result"])
+        else:
+            return res
+
     #delete message
     def delete_message(self, chat_id, message_id):
         """
@@ -304,22 +345,38 @@ class Bot:
                 chat_id,
                 question,
                 options, 
+                description =None,
+                poll_type=None,
                 question_parse_mode=None,
                 is_anonymous=None, 
                 allows_multiple_answers=None, 
                 allows_revoting=None, 
                 allow_adding_options=None,
+                shuffle_options=None,
+                correct_option_ids=None,
                 reply_markup=None):
+        
+        """
+        send poll \n
+        poll types: quiz or regular (defaults to regular) \n
+        correct_option_ids only for quiz type \n
+        correct_option_ids A JSON-serialized list of monotonically increasing 0-based identifiers of the correct answer options, required for polls in quiz mode \n
+
+        """
         data = {
             "chat_id": chat_id,
             "question": question,
             "options": json.dumps(options, ensure_ascii=False),
+            "description": description,
             "question_parse_mode": question_parse_mode or self.parse_mode,
             "is_anonymous": is_anonymous,
             "allows_multiple_answers": allows_multiple_answers,
             "allows_revoting": allows_revoting,
             "allow_adding_options": allow_adding_options,
-            "reply_markup": reply_markup
+            "reply_markup": reply_markup,
+            "type": poll_type,
+            "correct_option_ids": json.dumps(correct_option_ids)
+
 
         }
 
@@ -413,6 +470,9 @@ class Bot:
 
                         elif "callback_query" in update:
                             process_callback_query(self, update["callback_query"])
+
+                        elif "guest_message" in update:
+                            process_guest_message(self, update["guest_message"])
 
                     except Exception as e:
                         print("Update Processing Error:", e)
