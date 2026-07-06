@@ -24,6 +24,7 @@ class Chat:
     def __init__(self, data):
         self.data = data
         self.id = data.get("id")
+        self.type = data.get("type")
 
 
 #user data
@@ -174,9 +175,7 @@ class InlineQueryResultArticle:
                 data["reply_markup"] = self.reply_markup.to_dict()
 
         return data
-    
-
-    
+       
 class InputTextMessageContent:
     def __init__(self, message_text, parse_mode=None):
         self.message_text = message_text
@@ -210,7 +209,6 @@ class InputChecklist:
             "tasks": self.tasks
         }
 
-
 class InputChecklistTask:
     def __init__(self, id, text):
         self.id = id
@@ -222,5 +220,56 @@ class InputChecklistTask:
             "text": self.text
         }
     
+class UserProfilePhotos:
+    def __init__(self, data):
+        self.total_count = data.get("total_count")
+        photo = data.get("photos")
+        self.photos = PhotoSize(photo[0][-1])
 
+class PhotoSize:
+    def __init__(self, data):
+        self.file_id = data.get("file_id")
+        self.file_unique_id = data.get("file_unique_id")
+        self.width = data.get("width")
+        self.height = data.get("height")
+        self.file_size = data.get("file_size")
+
+class ChatFullInfo:
+    def __init__(self, data):
+        self.ALLdata = str(data)
+        self.id = data.get("id")
+        self.type = data.get("type")
+        self.title = data.get("title")
+        self.username = data.get("username")
+        self.first_name = data.get("first_name")
+        self.last_name = data.get("last_name")
+        self.is_forum = data.get("is_forum")
+        self.is_direct_messages = data.get("is_direct_messages")
+        self.accent_color_id = data.get("accent_color_id")
+        self.max_reaction_count = data.get("max_reaction_count")
+        self.bio = data.get("bio")
+        self.join_to_send_messages = data.get("join_to_send_messages")
+        self.join_by_request = data.get("join_by_request")
+        self.description = data.get("description")
+
+class ForceReply:
+    def __init__(self, force_reply=None, input_field_placeholder=None, selective=None):
+        self.force_reply = force_reply or True
+        self.input_field_placeholder = input_field_placeholder
+        self.selective = selective
+
+    def to_dict(self):
+        data = {
+            "force_reply": self.force_reply,
+        }
+
+        if self.force_reply is not None:
+            data["force_reply"] = self.force_reply
+        if self.input_field_placeholder is not None:
+            data ["input_field_placeholder"] = self.input_field_placeholder
+
+        return data
     
+
+
+

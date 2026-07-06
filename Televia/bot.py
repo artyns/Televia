@@ -1,6 +1,6 @@
 import requests
 import threading
-from .Types import Message, SentGuestMessage
+from .Types import Message, SentGuestMessage, UserProfilePhotos, ChatFullInfo
 from .handlers import process_message, process_callback_query, process_guest_message
 from time import sleep
 import json
@@ -266,7 +266,98 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
 
-    
+    def send_video(self, chat_id, video, caption=None, reply_to_message_id=None, parse_mode=None, has_spoiler=False, protect_content=False, message_effect_id=None, reply_markup=None):
+        """
+        send Video with URL or photo file
+        """
+        data = {
+            "chat_id": chat_id,
+            "caption": caption,
+            "reply_to_message_id": reply_to_message_id,
+            "parse_mode": parse_mode or self.parse_mode,
+            "has_spoiler": has_spoiler,
+            "protect_content": protect_content,
+            "message_effect_id": message_effect_id,
+        }
+
+        if reply_markup is not None:
+            if hasattr(reply_markup, "to_dict"):
+                data["reply_markup"] = json.dumps(reply_markup.to_dict())
+
+        if isinstance(video, str):
+            data["video"] = video
+            res = self.request("sendVideo", data=data)
+        else:
+            files = {"video": video}
+            res = self.request("sendVideo", data=data, files=files)
+
+        if res.get("ok"):
+            return Message(res["result"], bot=self)
+        return None
+
+    def send_audio(self, chat_id, audio, caption=None, reply_to_message_id=None, parse_mode=None, has_spoiler=False, protect_content=False, message_effect_id=None, reply_markup=None):
+        """
+        send audio with URL or photo file
+        """
+        data = {
+            "chat_id": chat_id,
+            "caption": caption,
+            "reply_to_message_id": reply_to_message_id,
+            "parse_mode": parse_mode or self.parse_mode,
+            "has_spoiler": has_spoiler,
+            "protect_content": protect_content,
+            "message_effect_id": message_effect_id,
+        }
+
+        if reply_markup is not None:
+            if hasattr(reply_markup, "to_dict"):
+                data["reply_markup"] = json.dumps(reply_markup.to_dict())
+
+        if isinstance(audio, str):
+            data["audio"] = audio
+            res = self.request("sendAudio", data=data)
+        else:
+            files = {"audio": audio}
+            res = self.request("sendAudio", data=data, files=files)
+
+        if res.get("ok"):
+            return Message(res["result"], bot=self)
+        return None
+
+    def send_dice(self, chat_id, emoji=None, protect_content=None):
+        data = {
+            "chat_id": chat_id,
+            "emoji": emoji,
+            "protect_content": protect_content
+        }
+
+        res = self.request("sendDice", data=data)
+        if res.get("ok"):
+            return Message(res["result"], bot=self)
+        return None
+
+    def send_message_draft(self, chat_id, draft_id, text=None, parse_mode=None):
+        data = {
+            "chat_id": chat_id,
+            "draft_id": draft_id,
+            "text": text,
+            "parse_mode": parse_mode
+        }
+
+        return self.request("sendMessageDraft", data=data)
+
+    def get_profile_photos(self, user_id, offset=None, limit=None):
+        data = {
+            "user_id": user_id,
+            "offset": offset,
+            "limit": limit
+        }
+        res = self.request("getUserProfilePhotos", data=data)
+        if res["ok"]:
+            return UserProfilePhotos(res["result"])
+        else:
+            return res
+
     def reply_to(self, message, text, message_id=None, parse_mode=None,protect_content=False, message_effect_id=None, reply_markup=None):
         """
         reply to message \n
@@ -290,6 +381,50 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+    def set_chat_photo(self, chat_id, photo):
+        data = {
+            "chat_id": chat_id
+        }
+
+        if isinstance(photo, str):
+            data["photo"] = photo
+            res = self.request("setChatPhoto", data=data)
+        else:
+            files = {"photo": photo}
+            res = self.request("setChatPhoto", data=data, files=files)
+
+        return res
+
+    def delete_chat_photo(self, chat_id):
+        data = {
+            "chat_id": chat_id
+        }
+
+        return self.request("deleteChatPhoto", data=data)
+
+    def set_chat_title(self, chat_id, text):
+        data = {
+            "chat_id": chat_id,
+            "text": text
+        }
+
+        return self.request("setChatTitle", data=data)
+
+    def set_chat_description(self, chat_id, text):
+        data = {
+            "chat_id": chat_id,
+            "text": text
+        }
+        return self.request("setChatDescription", data=data)
+
+    def get_chat(self, chat_id):
+        data = {
+            "chat_id": chat_id
+        }
+
+        res = self.request("getChat", data=data)
+        return ChatFullInfo(res["result"])
+
     #send chat action
     def send_chat_action(self, chat_id, action):
         """
