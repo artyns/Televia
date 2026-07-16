@@ -115,7 +115,7 @@ class CallbackQuery:
         self.id = data.get("id")
         self.data = data.get("data")
         self.chat_instance = data.get("chat_instance")
-        self.inline_message_id = data.get("inline_message_id")
+        self.inline_query_id = data.get("inline_query_id")
         self.from_user = data.get("from")
 
         self.message = Message(data["message"]) if data.get("message") else None
@@ -200,7 +200,7 @@ class InputTextMessageContent:
         
 class SentGuestMessage:
     def __init__(self, data):
-        self.inline_message_id = data["inline_message_id"] if data.get("inline_message_id") else None
+        self.inline_query_id = data["inline_query_id"] if data.get("inline_query_id") else None
 
 class InputChecklist:
     def __init__(self, title):

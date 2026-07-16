@@ -68,12 +68,12 @@ def process_guest_message(self, data):
                 return
             
 
-def process_inline_message(self, data):
+def process_inline_query(self, data):
     text = data.get("text")
     msg = inlineQuery(data)
 
     for handler in self.handlers:
-        if handler.get("type") != "inline_message":
+        if handler.get("type") != "inline_query":
             continue
 
         if handler["filter_func"]:

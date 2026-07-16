@@ -1,7 +1,7 @@
 import requests
 import threading
 from .Types import Message, SentGuestMessage, UserProfilePhotos, ChatFullInfo
-from .handlers import process_message, process_callback_query, process_guest_message, process_inline_message
+from .handlers import process_message, process_callback_query, process_guest_message, process_inline_query
 from time import sleep
 import json
 
@@ -115,7 +115,7 @@ class Bot:
         """
         def decorator(handler):
             self.handlers.append({
-                "type": "inline_message",
+                "type": "inline_query",
                 "commands": [],
                 "filter_func": func,
                 "content_types": content_types or [],
@@ -708,7 +708,7 @@ class Bot:
                             process_guest_message(self, update["guest_message"])
                         
                         elif "inline_query" in update:
-                            process_inline_message(self, update["inline_query"])
+                            process_inline_query(self, update["inline_query"])
 
                     except Exception as e:
                         print("Update Processing Error:", e)
