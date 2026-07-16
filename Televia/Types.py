@@ -9,7 +9,7 @@ class Message:
         self.text = data.get("text")
         self.caption = data.get("caption")
         self.receiver_user = data.get("receiver_user")
-        self.ephemeral_message_id = data.get("ephemeral_message_id")
+        self.ephemeral_message_id = data.get("ephemeral_message_id") if data.get("ephemeral_message_id") else None
         self.date = data.get("date")
 
         photo_data = data.get("photo")
@@ -19,7 +19,7 @@ class Message:
         self.from_user = User(data.get("from", {}))
         self.forward_from = User(data["forward_from"]) if data.get("forward_from") else None
         self.reply_to_message = Message(data["reply_to_message"], bot=bot) if data.get("reply_to_message") else None
-        self.quote = Quote(data.get("TextQuote"))
+        self.quote = Quote(data.get("TextQuote")) if data.get("TextQuote") else None
 
         self.guest_query_id = data["guest_query_id"] if data.get("guest_query_id") else None
 
@@ -281,6 +281,33 @@ class ForceReply:
 
         return data
     
+class InputRichMessage:
+    def __init__(self, html="", markdown="", blocks=[], media=[], is_rtl=False, skip_entity_detection=False):
+        self.html = html
+        self.markdown = markdown
+        self.blocks = blocks
+        self.media = media
+        self.is_rtl = is_rtl
+        self.skip_entity_detection = skip_entity_detection
+    
+    def to_dict(self):
+        return {
+            "html": self.html,
+            "markdown": self.markdown,
+            "block": self.blocks,
+            "media": self.media,
+            "is_rtl": self.is_rtl,
+            "skip_entity_detection": self.skip_entity_detection
+        }
 
+class inlineQuery:
+    def __init__(self, data):
+        self.id = data.get("id")
+        self.from_user = User(data.get("from"))
+        self.chat_type = data.get("chat_type")
+        self.query = data.get("query")
+        self.offset = data.get("offset")
+        
+       
 
 

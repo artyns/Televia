@@ -1,4 +1,4 @@
-from .Types import Message, CallbackQuery
+from .Types import Message, CallbackQuery, inlineQuery
 
 
 def process_message(self, data):
@@ -57,6 +57,23 @@ def process_guest_message(self, data):
 
     for handler in self.handlers:
         if handler.get("type") != "guest_message":
+            continue
+
+        if handler["filter_func"]:
+            if handler["filter_func"](msg):
+                try:
+                    handler["func"](msg)
+                except Exception as e:
+                    print(e)
+                return
+            
+
+def process_inline_message(self, data):
+    text = data.get("text")
+    msg = inlineQuery(data)
+
+    for handler in self.handlers:
+        if handler.get("type") != "inline_message":
             continue
 
         if handler["filter_func"]:

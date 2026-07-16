@@ -1,7 +1,7 @@
 import requests
 import threading
 from .Types import Message, SentGuestMessage, UserProfilePhotos, ChatFullInfo
-from .handlers import process_message, process_callback_query, process_guest_message
+from .handlers import process_message, process_callback_query, process_guest_message, process_inline_message
 from time import sleep
 import json
 
@@ -95,14 +95,27 @@ class Bot:
 
     def guest_message_handler(self, func=None, content_types=None):
         """
-        message handler
-        use:
-        @bot.message_handler(commands=["start"])
-        @bot.message_handler(func=lambda m: True)
+        guest message handler
+        
         """
         def decorator(handler):
             self.handlers.append({
                 "type": "guest_message",
+                "commands": [],
+                "filter_func": func,
+                "content_types": content_types or [],
+                "func": handler
+            })
+            return handler
+        return decorator
+
+    def inline_handler(self, func=None, content_types=None):
+        """
+        inline handler
+        """
+        def decorator(handler):
+            self.handlers.append({
+                "type": "inline_message",
                 "commands": [],
                 "filter_func": func,
                 "content_types": content_types or [],
@@ -139,6 +152,29 @@ class Bot:
             return Message(res["result"], bot=self)
         return None
     
+    def send_rich_message(self, chat_id, rich_message, protect_content=None, reply_markup=None):
+        data = {
+            "chat_id": chat_id,
+            "protect_content": protect_content,
+        }
+
+        if reply_markup is not None:
+            if hasattr(reply_markup, "to_dict"):
+                data["reply_markup"] = json.dumps(reply_markup.to_dict())
+
+        if rich_message is not None:
+            if hasattr(rich_message, "to_dict"):
+                data["rich_message"] = json.dumps(rich_message.to_dict())
+
+        res = self.request(
+            "sendRichMessage",
+            data=data 
+        )
+
+        if res.get("ok"):
+            return Message(res["result"], bot=self)
+        return res
+
     def send_check_list(self, chat_id, checklist):
         data = {
             "chat_id": chat_id,
@@ -168,6 +204,30 @@ class Bot:
 
         if res["ok"] == True:
             return SentGuestMessage(res["result"])
+        else:
+            return res
+
+    def answer_inline_query(self, inline_query_id, *results):
+        data = {
+            "inline_query_id": inline_query_id
+        }
+
+        resultsList = []
+
+        for result in results:
+            if hasattr(result, "to_dict"):
+                resultsList.append(result.to_dict())
+            elif isinstance(result, dict):
+                resultsList.append(result)
+            else:
+                raise TypeError(f"Invalid result type: {type(result)}")
+
+        data["results"] = resultsList
+
+        res = self.request("answerInlineQuery", json_data=data)
+
+        if res["ok"] == True:
+            return res["result"]
         else:
             return res
 
@@ -646,6 +706,9 @@ class Bot:
 
                         elif "guest_message" in update:
                             process_guest_message(self, update["guest_message"])
+                        
+                        elif "inline_query" in update:
+                            process_inline_message(self, update["inline_query"])
 
                     except Exception as e:
                         print("Update Processing Error:", e)
