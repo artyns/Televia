@@ -309,6 +309,7 @@ class Bot:
             "has_spoiler": has_spoiler,
             "protect_content": protect_content,
             "message_effect_id": message_effect_id,
+            "receiver_user_id": receiver_user_id,
         }
 
         if reply_markup is not None:
@@ -338,6 +339,7 @@ class Bot:
             "has_spoiler": has_spoiler,
             "protect_content": protect_content,
             "message_effect_id": message_effect_id,
+            "receiver_user_id": receiver_user_id,
         }
 
         if reply_markup is not None:
@@ -367,6 +369,7 @@ class Bot:
             "has_spoiler": has_spoiler,
             "protect_content": protect_content,
             "message_effect_id": message_effect_id,
+            "receiver_user_id": receiver_user_id,
         }
 
         if reply_markup is not None:
@@ -402,7 +405,8 @@ class Bot:
             "receiver_user_id": receiver_user_id,
             "emoji": emoji,
             "protect_content": protect_content,
-            "message_effect_id": message_effect_id
+            "message_effect_id": message_effect_id,
+            "receiver_user_id": receiver_user_id,
         }
 
         if reply_markup is not None:
